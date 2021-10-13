@@ -9,7 +9,6 @@ import imutils
 import time
 import cv2
 import os
-import h5py
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 
