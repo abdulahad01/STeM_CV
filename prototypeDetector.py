@@ -124,6 +124,7 @@ def main():
             cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
             if(mask > withoutMask):
+                print("Mask Detected")
                 return 1
 
             
