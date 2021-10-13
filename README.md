@@ -13,4 +13,3 @@ This is an automated system that can be installed at entry point of public build
 - Python 
 - Raspberry pi 4
 - Arduino UNO
-
