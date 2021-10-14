@@ -10,8 +10,11 @@ import time
 import cv2
 import os
 import h5py
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+from Maskdetector import webcamCapture
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
+dim = (400,400)
+
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
     # grab the dimensions of the frame and then construct a blob
@@ -87,15 +90,20 @@ def main():
     maskNet = load_model("detector1.model")
 
     # initialize the video stream
+    cap = webcamCapture()
+    cap.start()
     print("[INFO] starting video stream...")
-    vs = VideoStream(src=0).start()
+    #vs = VideoStream(src=0).start()
+    
+    
 
     # loop over the frames from the video stream
     while True:
         
         # grab the frame from the threaded video stream and resize it
         # to have a maximum width of 400 pixels
-        frame = vs.read()
+        #frame = vs.read()
+        frame = cap.read()
         frame = imutils.resize(frame, width=400)
 
         # detect faces in the frame and determine if they are wearing a
@@ -136,13 +144,14 @@ def main():
 
         # if the `q` key was pressed, break from the loop
         if key == ord("q"):
+            cap.stop()
             break
 
     # do a bit of cleanup
     cv2.destroyAllWindows()
-    vs.stream.release()
+#     vs.stream.release()
     #vs.stop()
     #vs.release()
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+#    main()

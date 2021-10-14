@@ -10,14 +10,15 @@ bus = SMBus(1)
 
 numb =1
 
-print('Enter 1 for ON or 0 for OFF')
+print('Script starting')
+bus.write_byte(addr,0x0)
 
-   while numb ==1:
+while numb ==1:
 
     isMaskSet = main()
 
     ledstate = isMaskSet
-    print(ledstate)
+    print('State: ',ledstate)
     
     if ledstate == 1:
         bus.write_byte(addr, 0x1)
@@ -25,4 +26,5 @@ print('Enter 1 for ON or 0 for OFF')
         bus.write_byte(addr, 0x0)
     else:
         numb = 0
+        
         

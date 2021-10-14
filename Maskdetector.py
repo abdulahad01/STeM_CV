@@ -11,7 +11,8 @@ import cv2
 import os
 from picamera.array import PiRGBArray
 from picamera import PiCamera
-
+import datetime
+from threading import Thread
 
 
 class MaskDetector :
@@ -132,11 +133,85 @@ class MaskDetector :
         cv2.destroyAllWindows()
         vs.stream.release()
 
-if __name__ == '__main__':
+class FPS:
     
-    prototxtPath = r"deploy.prototxt"
-    weightsPath = r"res10_300x300_ssd_iter_140000.caffemodel"
-    model = r"detector1.model"
+    def __init__(self):
+        #Starting time stamp
+        # ending timestamp
+        # Number of frames captured
+        self.start = None
+        self.end = None
+        self._numFrames = 0
+        
+    def start(self):
+        # Starts the timer
+        self._start =datetime.datetime.now()
+        return self
     
-    detector = MaskDetector(model,prototxtPath, weightsPath)
-    detector.capture()
+    def stop(self):
+        self._end =datetime.datetime.now()
+        
+    def update(self):
+        #increments the number of frames
+        self._numFrames += 1
+    
+    def elapsed(self):
+        return(self._end - self._start).total_seconds()
+    
+    def fps(self):
+        return self._numFrames
+    
+class webcamCapture:
+    
+    def __init__(self, src=0):
+        self.stream = cv2.VideoCapture(src)
+        (self.grabbed, self.frame) = self.stream.read()
+        self.stopped = False
+        
+    def start(self):
+        Thread(target=self.update, args=()).start()
+            
+    def update(self):
+        while True:
+            if self.stopped:
+                return
+            (self.grabbed,self.frame) = self.stream.read()
+            
+    def read(self):
+        return self.frame
+    
+    def stop(self):
+        self.stopped= True
+        
+    
+        
+    
+
+#if __name__ == '__main__':
+    
+    #prototxtPath = r"deploy.prototxt"
+    #weightsPath = r"res10_300x300_ssd_iter_140000.caffemodel"
+    #model = r"detector1.model"
+    
+    #detector = MaskDetector(model,prototxtPath, weightsPath)
+    #detector.capture()
+    
+    #print('Starting script')
+    
+    #stream = webcamCapture()
+    #stream.start()
+    #while True:
+    #    frame = stream.read()
+    #    frame = imutils.resize(frame, width=400)
+    #    cv2.imshow('frame',frame)
+    #    key = cv2.waitKey(1)
+    #    if key == ord('q'):
+    #        stream.stop()
+    #        break
+    #cv2.destroyAllWindows()
+    
+        
+        
+    
+    
+    
