@@ -1,5 +1,6 @@
 # import the necessary packages
-import numpy as np 
+import numpy as np
+import tflite_runtime.interpreter as tflite
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 from tensorflow.keras.models import load_model
@@ -15,14 +16,16 @@ import datetime
 from threading import Thread
 
 
+
 class MaskDetector :
-    def __init__(self,model,prototxtPath, weightsPath):
-        
+    def __init__(self,model,prototxtPath, weightsPath,cap = None):
+#         self.masknet = tflite.Interpreter(model)        
         self.maskNet = load_model("detector1.model")
         self.faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+        self.stream =  cap
+
         
-        
-    def detect_and_predict_mask(self,frame,faceNet,maskNet):
+    def detect_and_predict_mask(self,frame):
         # grab the dimensions of the frame and then construct a blob
         # from it
         (h, w) = frame.shape[:2]
@@ -31,7 +34,7 @@ class MaskDetector :
 
         # pass the blob through the network and obtain the face detections
         self.faceNet.setInput(blob)
-        detections = faceNet.forward()
+        detections = self.faceNet.forward()
         print(detections.shape)
 
         # initialize our list of faces, their corresponding locations,
@@ -77,7 +80,9 @@ class MaskDetector :
                 # faces at the same time rather than one-by-one predictions
                 # in the above `for` loop
                 faces = np.array(faces, dtype="float32")
-                preds = maskNet.predict(faces, batch_size=32)
+                preds = self.maskNet.predict(faces, batch_size=32)
+#                 preds = interpreter.get_signature_runner()
+
 
             # return a 2-tuple of the face locations and their corresponding
             # locations
@@ -86,19 +91,22 @@ class MaskDetector :
     def capture (self):
         #initialize the video stream
         print("[INFO] starting video stream...")
-        vs = VideoStream(src=0).start()
+#         vs = VideoStream(src=0).start()
+        self.stream.start()
+
 
         # loop over the frames from the video stream
         while True:
             
             # grab the frame from the threaded video stream and resize it
             # to have a maximum width of 400 pixels
-            frame = vs.read()
+#             self.frame = vs.read()
+            frame = self.stream.read()
             frame = imutils.resize(frame, width=400)
 
             # detect faces in the frame and determine if they are wearing a
             # face mask or not
-            (locs, preds) = self.detect_and_predict_mask(frame, self.faceNet, self.maskNet)
+            (locs, preds) = self.detect_and_predict_mask(frame)
 
             # loop over the detected face locations and their corresponding
             # locations
@@ -117,8 +125,7 @@ class MaskDetector :
 
                 # display the label and bounding box rectangle on the output
                 # frame
-                cv2.putText(frame, label, (startX, startY - 10),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
+                cv2.putText(frame, label, (startX, startY - 10),cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
                 cv2.rectangle(frame, (startX, startY), (endX, endY), color, 2)
 
             # show the output frame
@@ -127,11 +134,12 @@ class MaskDetector :
 
             # if the `q` key was pressed, break from the loop
             if key == ord("q"):
+                self.stream.stop()
                 break
 
             # do a bit of cleanup
         cv2.destroyAllWindows()
-        vs.stream.release()
+#         vs.stream.release()
 
 class FPS:
     
@@ -187,29 +195,31 @@ class webcamCapture:
         
     
 
-#if __name__ == '__main__':
+if __name__ == '__main__':
     
-    #prototxtPath = r"deploy.prototxt"
-    #weightsPath = r"res10_300x300_ssd_iter_140000.caffemodel"
-    #model = r"detector1.model"
+
     
-    #detector = MaskDetector(model,prototxtPath, weightsPath)
-    #detector.capture()
+    print('Starting script')
     
-    #print('Starting script')
+#     stream = webcamCapture()
+#     stream.start()
+#     while True:
+#         frame = stream.read()
+#         frame = imutils.resize(frame, width=400)
+#         cv2.imshow('frame',frame)
+#         key = cv2.waitKey(1)
+#         if key == ord('q'):
+#             stream.stop()
+#             break
+#     cv2.destroyAllWindows()
     
-    #stream = webcamCapture()
-    #stream.start()
-    #while True:
-    #    frame = stream.read()
-    #    frame = imutils.resize(frame, width=400)
-    #    cv2.imshow('frame',frame)
-    #    key = cv2.waitKey(1)
-    #    if key == ord('q'):
-    #        stream.stop()
-    #        break
-    #cv2.destroyAllWindows()
-    
+#     stream = webcamCapture()
+#     prototxtPath = r"deploy.prototxt"
+#     weightsPath = r"res10_300x300_ssd_iter_140000.caffemodel"
+#     model = r"detector1.model"
+#     
+#     detector = MaskDetector(model,prototxtPath, weightsPath, cap =stream)
+#     detector.capture()
         
         
     
