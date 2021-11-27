@@ -11,6 +11,7 @@ import cv2
 import os
 import h5py
 from Maskdetector import webcamCapture
+import time
 #from picamera.array import PiRGBArray
 #from picamera import PiCamera
 dim = (400,400)
@@ -78,6 +79,7 @@ def detect_and_predict_mask(frame, faceNet, maskNet):
     return (locs, preds)
 
 def main():
+    print(time.time())
     # load our serialized face detector model from disk
     # prototxtPath = r"face_detector\deploy.prototxt"
     # weightsPath = r"face_detector\res10_300x300_ssd_iter_140000.caffemodel"
@@ -88,7 +90,7 @@ def main():
 
     # load the face mask detector model from disk
     maskNet = load_model("detector1.model")
-
+    
     # initialize the video stream
     cap = webcamCapture()
     cap.start()
@@ -113,6 +115,7 @@ def main():
         # loop over the detected face locations and their corresponding
         # locations
         for (box, pred) in zip(locs, preds):
+            print(time.time())
             # unpack the bounding box and predictions
             (startX, startY, endX, endY) = box
             (withoutMask, mask) = pred

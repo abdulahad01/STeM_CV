@@ -3,11 +3,10 @@ import numpy as np
 import imutils
 import cv2
 from tflite_runtime.interpreter import Interpreter
-from Maskdetector import webcamCapture
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
 
-
+err_det=True
 # required variables and uploads
 prototxtPath = r"deploy.prototxt"
 weightsPath = r"res10_300x300_ssd_iter_140000.caffemodel"
@@ -24,8 +23,14 @@ def load_labels(path):
 def set_input_tensor(interpreter, image):
   tensor_index = interpreter.get_input_details()[0]['index']
   input_tensor = interpreter.tensor(tensor_index)()[0]
-  input_tensor[:, :] = image
-
+  global err_det
+  try:
+      input_tensor[:, :] = image
+      err_det=True
+      print("det")
+  except:
+      err_det=False 
+      print("no_det")
 
 def classify_image(interpreter, image, top_k=1):
   """Returns a sorted array of classification results."""
@@ -70,7 +75,7 @@ def detect_face(frame, faceNet):
 
         # filter out weak detections by ensuring the confidence is
         # greater than the minimum confidence
-        if confidence > 0.75:
+        if confidence > 0.60:
             # compute the (x, y)-coordinates of the bounding box for
             # the object
             box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
@@ -103,36 +108,55 @@ def detect_face(frame, faceNet):
 
 
 def main():
-# load our serialized face detector model from disk
-
-
-  interpreter = Interpreter(model)
-  interpreter.allocate_tensors()
-  _, height, width, _ = interpreter.get_input_details()[0]['shape']
-  stream = webcamCapture()
-  print("[INFO] starting video stream...")
-  stream.start()
-  while True:
-      frame = stream.read()
-      frame = imutils.resize(frame,width=400)
-      (image,locs) = detect_face(frame,faceNet)
-      results = classify_image(interpreter,image)
-#       print(results)
-      for val, pred in results:
-          if val == 0 and pred >=0.6:
-              label = 'No mask'
-          else: label= 'mask detected'
-#           print(label)
-      cv2.putText(frame, label, (15,20),cv2.FONT_HERSHEY_SIMPLEX,1, color, 2)
-      cv2.imshow('Frame',frame)
-      key = cv2.waitKey(1)
+    checker_count=0
+    mask_checker=[]
+    # load our serialized face detector model from disk
+    interpreter = Interpreter(model)
+    interpreter.allocate_tensors()
+    _, height, width, _ = interpreter.get_input_details()[0]['shape']
+    stream = webcamCapture()
+    print("[INFO] starting video stream...")
+    stream.start()
+    while True:
+        frame = stream.read()
+        frame = imutils.resize(frame,width=400)
+        (image,locs) = detect_face(frame,faceNet)
+        results = classify_image(interpreter,image)
+        #       print(results)
+        if(err_det==True):
+            for val, pred in results:
+                if (val == 0 and pred >=0.6):
+                    label = 0  #no mask 
+                elif val==1 and pred >=0.65:
+                    label = 1 #mask
+                checker_count=checker_count+1
+                mask_checker.append(label)
+                print(label)
+                print(checker_count)
+                
+        elif(err_det==False):
+            continue
+        
+        if checker_count==10:
+            checker=0
+            if sum(mask_checker)>=7:
+                mask_checker=[]
+                return True
+            else:
+                print("Please put your mask properly")
+                checker_count=0
+                continue
+        else:
+            continue
+        #cv2.putText(frame, label, (15,20),cv2.FONT_HERSHEY_SIMPLEX,1, color, 2)
+        #cv2.imshow('Frame',frame)
+        #key = cv2.waitKey(1)
       
 #       press q to exit()
-      if key == ord('q'):
-          stream.stop()
-          break
-        
-  cv2.destroyAllWindows()
+        #if key == ord('q'):
+            #stream.stop()
+            #break
+    #cv2.destroyAllWindows()
 
 
 

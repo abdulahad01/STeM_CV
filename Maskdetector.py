@@ -10,8 +10,8 @@ import imutils
 import time
 import cv2
 import os
-from picamera.array import PiRGBArray
-from picamera import PiCamera
+#from picamera.array import PiRGBArray
+#from picamera import PiCamera
 import datetime
 from threading import Thread
 
